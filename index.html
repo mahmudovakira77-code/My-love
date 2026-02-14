@@ -120,7 +120,7 @@
           q: ~~(rand() * heartPointsCount),
           D: 2 * (i % 2) - 1,
           force: 0.2 * rand() + 0.7,
-          f: "rgba(51, 204, 255, 0.7)",
+          f: "rgba(255, 0, 50, 0.8)", // вишнёвый цвет
           trace: Array.from({ length: traceCount }, () => ({ x, y })),
         };
       }
@@ -128,9 +128,13 @@
       var config = { traceK: 0.4, timeDelta: 0.6 };
       var time = 0;
 
+      // добавляем финальный разлет
+      var isFinale = false;
+      setTimeout(() => { isFinale = true; }, 10000); // через 10 секунд
+
       var loop = function () {
         var n = -Math.cos(time);
-        pulse((1 + n) * 0.5, (1 + n) * 0.5);
+        if (!isFinale) pulse((1 + n) * 0.5, (1 + n) * 0.5);
         time += (Math.sin(time) < 0 ? 9 : n > 0.8 ? 0.2 : 1) * config.timeDelta;
 
         ctx.fillStyle = "rgba(0,0,0,.1)";
@@ -138,23 +142,30 @@
 
         for (var i = e.length; i--; ) {
           var u = e[i];
-          var q = targetPoints[u.q];
-          var dx = u.trace[0].x - q[0];
-          var dy = u.trace[0].y - q[1];
-          var length = Math.sqrt(dx * dx + dy * dy);
 
-          if (length < 10) {
-            if (rand() > 0.95) {
-              u.q = ~~(rand() * heartPointsCount);
-            } else {
-              if (rand() > 0.99) u.D *= -1;
-              u.q = (u.q + u.D) % heartPointsCount;
-              if (u.q < 0) u.q += heartPointsCount;
+          if (!isFinale) {
+            var q = targetPoints[u.q];
+            var dx = u.trace[0].x - q[0];
+            var dy = u.trace[0].y - q[1];
+            var length = Math.sqrt(dx * dx + dy * dy);
+
+            if (length < 10) {
+              if (rand() > 0.95) u.q = ~~(rand() * heartPointsCount);
+              else {
+                if (rand() > 0.99) u.D *= -1;
+                u.q = (u.q + u.D) % heartPointsCount;
+                if (u.q < 0) u.q += heartPointsCount;
+              }
             }
+
+            u.vx += (-dx / length) * u.speed;
+            u.vy += (-dy / length) * u.speed;
+          } else {
+            // финальный разлет
+            u.vx += (rand() - 0.5) * 4;
+            u.vy += (rand() - 0.5) * 4;
           }
 
-          u.vx += (-dx / length) * u.speed;
-          u.vy += (-dy / length) * u.speed;
           u.trace[0].x += u.vx;
           u.trace[0].y += u.vy;
           u.vx *= u.force;
@@ -184,3 +195,4 @@
   </script>
 </body>
 </html>
+
